@@ -3,19 +3,20 @@ extern crate serde;
 use serde::Deserialize
 
 #[derive(Deserialize, Debug)]
-struct PostAccessToken {
-    access_token: String,
-    refresh_token: String,
-    token_type: String,
-    expires_in: u32,
-    scope: String,
-    refresh_token_expires_in: u32
-}
-
-struct AccessTokenRequest {
+pub struct AccessTokenRequest {
     grant_type: String,
     refresh_token: String,
     client_id: String, 
+}
+
+#[derive(Deserialize, Debug)]
+pub struct AccessTokenResponse {
+        access_token: String,
+        refresh_token: String,
+        token_type: String,
+        expires_in: u64,
+        scope: String,
+        refresh_token_expires_in: u64      
 }
 
 
