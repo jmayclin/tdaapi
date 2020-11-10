@@ -7,7 +7,13 @@ use tdaapi::{API};
 #[tokio::main]
 async fn main() {
     println!("Hello, world!");
-    let api = API::new();
+    let mut api = API::new();
+    let handle = tokio::spawn(async move {
+        let res = api.get_quote("AAPL").await;
+    });
+    handle.await;
+
+    /*
     let mut handles = Vec::new();
     for _ in 0..5 {
         let api_c = api.clone();
@@ -22,5 +28,6 @@ async fn main() {
     for h in handles {
         h.await;
     }
+    */
 
 }

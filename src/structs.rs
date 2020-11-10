@@ -12,6 +12,12 @@ struct PostAccessToken {
     refresh_token_expires_in: u32
 }
 
+struct AccessTokenRequest {
+    grant_type: String,
+    refresh_token: String,
+    client_id: String, 
+}
+
 
 #[derive(Deserialize, Debug)]
 struct QuoteStock {
