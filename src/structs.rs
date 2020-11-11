@@ -102,3 +102,20 @@ pub struct QuoteOption {
     pub exchangeName: String,
     pub settlementType: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PriceHistory {
+    pub candles: Vec<Candle>,
+    pub empty: bool,
+    pub symbol: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Candle {
+    pub close: f64,
+    pub datetime: f64,
+    pub high: f64,
+    pub low: f64,
+    pub open: f64,
+    pub volume: f64,
+}
