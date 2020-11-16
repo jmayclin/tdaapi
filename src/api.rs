@@ -54,14 +54,14 @@ impl API {
         let consumer_key = API::get_consumer_key().unwrap();
         let https = HttpsConnector::new();
         println!(
-            "Initilized with \naccess token of {}\nconsumer key of {}",
+            "[new] Initilized with \naccess token of {}\nconsumer key of {}",
             token, consumer_key
         );
 
         API {
             limiter: Limiter::new(),
             consumer_key: consumer_key,
-            access_token: token,
+            access_token: token, 
             last_refresh: Instant::now() - Duration::from_secs(60 * 15),
             refreshing: Arc::new(Mutex::new(false)),
             client: Client::builder().build::<_, hyper::Body>(https),
@@ -69,7 +69,6 @@ impl API {
     }
 
     fn get_access_token() -> Result<String, std::io::Error> {
-        String::from("imanaccesstoken");
         let contents = String::from(fs::read_to_string("access.secret")?.trim());
         Ok(contents)
     }
@@ -92,7 +91,10 @@ impl API {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if self.last_refresh.elapsed() < Duration::from_secs(60 * 5) {
             panic!("Attempting to refresh token after less than 5 minutes");
+        } else {
+            self.last_refresh = Instant::now();
         }
+
 
         let refresh_body = AccessTokenRequest {
             client_id: "OD8T1O14POUWY00BJJPGQBIPWPQ8PNWZ".to_owned(),
@@ -105,63 +107,34 @@ impl API {
             serde_json::to_string(&refresh_body)?
         );
 
-        /*
-        let req1 = Request::builder()
-            .method(Method::POST)
-            .uri("https://api.tdameritrade.com/v1/oauth2/token")
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .header("Accept-Encoding", "gzip")
-            .header("Accept-Language", "en-US")
-            .header(
-                "User-Agent",
-                "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:82.0) Gecko/20100101 Firefox/82.0",
-            )
-            .body(Body::from(format!(
-                "grant_type=refresh_token&refresh_token={refresh_token}&client_id={consumer_key}",
-                consumer_key = API::get_consumer_key()?,
-                refresh_token = API::get_refresh_token()?
-            )))?;
-
-        let req2 = Request::builder()
-            .method(Method::POST)
-            .uri("https://api.tdameritrade.com/v1/oauth2/token")
-            .header("Content-Type", "application/json")
-            .header("Accept-Language", "en-US")
-            .header("User-Agent", "Miss Vanjie")
-            .body(Body::from(serde_json::to_string(&refresh_body)?))?;
-        */
-
-        let req3 = Request::builder()
+        let req = Request::builder()
             .method(Method::POST)
             .uri("https://api.tdameritrade.com/v1/oauth2/token")
             .header("Content-Type", "application/x-www-form-urlencoded")
             .header("User-Agent", "Miss Vanjie")
             .body(Body::from("grant_type=refresh_token&refresh_token=Pe%2F4TMiknedQhJpwHqrGZJIYw1zH3zj3yJdDBC64qDce%2FRCEBC%2BmbkIdAY%2B%2BbbLi6ro%2BuKYHTebb23AOg7To8KJfXKTgyIL4I2xWC9s%2BPCwvSieHgL3s%2BfJ8htZJA3GZDt8FZbWch8icoLb0EnJUyKj0JJ3tu4Tz%2BRG78JXhazW8ztMBCuDXvSQLoV%2BsiMJ29fgV9nznSzaL2QvjkAb9NVnuC5t0mAadSsbKkt8zL3DuUoTPP8AAQ%2FTH8r4sPB94gNjgloiGZQ5aaH1kpr%2BpKL1x%2FmCJ4hcnQ%2BABVyI75UAkauSoEQLkKC9BMGFVCjY6kVSvo3foewv2jrcKLWVM%2FofZF0JMGOVRoATbexhvBhAQ7cEP1i4W3aVXKV307XqryNrRsV7ktHt04D%2FY2Aez9bMq9B0hnj0vt5hIEjiba3B4BsqnVS%2Fk4%2F9txEQ100MQuG4LYrgoVi%2FJHHvlL8DU5J9puGlPd74mZ7M41EZmCQX%2B0gpmEFd7hs6cPGxbvYB%2B%2BC2%2FTSk%2FwcMl4L6i6AFMVXr9Q7WcvxO4AsyHsW38Z42fnHHzYzg3COG42xG%2FnxXwFeId%2FzSwr31ZsZc7qKmia1Slmx%2B0MdVTEAhEByQnyPHT7%2FJmHxoNvUsy83IVowDkV9Sslkk5h4HbIdKCFd0Pjo6kkOmq7deHoV6jLS0EtBeDsfY7430ETZ3a91945njCgDqwUdHoUwRrXm61YiBAWX7ygZylQNTshT1JSH8Bm1GlJjXMuMDxyE17yMf1I76oLDQ37cw4G6V1G3IiHoQidw0N6KEfPI3QnkGLg%2BFCT8ziVtvoN26H7qwXgctBTVK5ZvI94pfm%2B7fK7%2F0HeJxTdQ%2BYzVFAPMwGKvcK4wQqAxH3HXHuaRWJ%2F%2F%2B34B7UoH2PKKuvAe%2BWdyE%3D212FD3x19z9sWBHDJACbC00B75E&access_type=&code=&client_id=OD8T1O14POUWY00BJJPGQBIPWPQ8PNWZ&redirect_uri="))?;
-        let resp = self.client.request(req3).await?;
+        let resp = self.client.request(req).await?;
 
-        let res_status = resp.status();
-        println!("Headers:\n{:#?}", resp.headers());
-        let body = hyper::body::to_bytes(resp.into_body()).await?;
-        println!("The body of the response is {:?}", body);
         // too many retires return the exit
-        if res_status != http::StatusCode::OK {
+        if resp.status() != http::StatusCode::OK {
             return Err("Failed to refresh access token".into());
         }
 
+        let body = hyper::body::to_bytes(resp.into_body()).await?;
         let auth_response = serde_json::from_slice(&body);
         let auth_response: AccessTokenResponse = match auth_response {
             Ok(response) => response,
             Err(error) => panic!("Problem parsing response {:?}", error),
         };
         //println!("The new access token response is {:?}", auth_response);
-        println!("The actual access token is {}", auth_response.access_token);
+        //println!("The actual access token is {}", auth_response.access_token);
 
         let mut f = fs::File::create("access.secret").expect("Unable to create file");
-        println!("Created file");
+        //println!("Created file");
         f.write_all(auth_response.access_token.as_bytes())
             .expect("Unable to write data");
         self.access_token = auth_response.access_token;
-        //println!("Wrote accesstoken to fle?");
+        println!("[refresh_access_token] Wrote accesstoken to fle?");
         Ok(())
     }
 
@@ -170,9 +143,10 @@ impl API {
     // 2
     pub async fn history(
         &mut self,
-        symbol: String,
+        symbol: &str,
         period: u32,
     ) -> Result<Vec<Candle>, Box<dyn Error + Send + Sync>> {
+        println!("[history] Requestion history for {}", symbol);
 
         let uri = format!(
             "https://api.tdameritrade.com/v1/marketdata/{ticker}/pricehistory?apikey={apikey}&periodType={period_type}&period={period}&frequencyType={frequency_type}&frequency={frequency}",
@@ -198,41 +172,29 @@ impl API {
             String::from(""),
         ).await?;
         let body = hyper::body::to_bytes(resp.into_body()).await?;
-        println!("body is {:?}", body);
 
-        let history: Value = serde_json::from_slice(&body)?;
-        println!(
-            "The weak type is {}",
-            serde_json::to_string_pretty(&history).unwrap()
-        );
-
+        // condense this
         let history = serde_json::from_slice(&body);
         let history: PriceHistory = match history {
             Ok(response) => response,
             Err(error) => panic!("Problem parsing response {:?}", error),
         };
-        println!(
-            "The strong type is {}",
-            serde_json::to_string_pretty(&history).unwrap()
-        );
 
         Ok(history.candles)
     }
 
     //3
-    pub async fn quote(&mut self, symbol: &str) -> Result<f64, Box<dyn Error + Send + Sync>> {
+    pub async fn quote(&mut self, symbol: &str) -> Result<QuoteStock, Box<dyn Error + Send + Sync>> {
         println!(
-            "[{place}] -> {method} : {message}",
-            place = "API",
-            method = "get_quote",
-            message = format!("getting quote of {}", symbol)
+            "[quote] : getting quote of symbol {}",
+            symbol
         );
         let uri = format!(
             "https://api.tdameritrade.com/v1/marketdata/{ticker}/quotes",
             ticker = symbol
-        )
-        .parse::<Uri>()
-        .unwrap();
+            )
+            .parse::<Uri>()
+            .unwrap();
 
         let mut headers = hyper::HeaderMap::new();
         headers.insert(
@@ -244,17 +206,18 @@ impl API {
             .request(Method::GET, uri, headers, String::from(""))
             .await?;
         let body = hyper::body::to_bytes(resp.into_body()).await?;
-        //println!("{:?}", body);
 
+        // condense this
+        // swtich these error messages to fatal failures
         let stock_quote = serde_json::from_slice(&body);
         let stock_quote: std::collections::HashMap<String, QuoteStock> = match stock_quote {
             Ok(response) => response,
             Err(error) => panic!("Problem parsing response {:?}", error),
         };
 
-        //println!("The strong type is {}", serde_json::to_string_pretty(&stock_quote).unwrap());
-
-        Ok(stock_quote[symbol].askPrice)
+        println!("Stock quote for {} is {:?}", symbol, stock_quote);
+        let quote = stock_quote[symbol].clone();
+        Ok(quote)
     }
 
     //4
@@ -290,13 +253,11 @@ impl API {
         headers: hyper::HeaderMap,
         content: String,
     ) -> Result<Response<Body>, Box<dyn Error + Send + Sync>> {        
-        // req2 = req.clone()
+
         self.limiter.delay().await;
         while *self.refreshing.lock().unwrap() {
             println!(
-                "[{place}] -> {method} : {message}",
-                place = "API",
-                method = "request",
+                "[request] : {message}",
                 message = "reschedule request to to current refresh"
             );
             self.limiter.delay().await;

@@ -17,7 +17,7 @@ pub struct AccessTokenResponse {
     //refresh_token_expires_in: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct QuoteStock {
     //Equity:
     pub symbol: String,
@@ -37,8 +37,8 @@ pub struct QuoteStock {
     pub closePrice: f64,
     pub netChange: f64,
     pub totalVolume: f64,
-    pub quoteTimeInLong: f64,
-    pub tradeTimeInLong: f64,
+    pub quoteTimeInLong: i64,
+    pub tradeTimeInLong: i64,
     pub mark: f64,
     pub exchange: String,
     pub exchangeName: String,
@@ -77,8 +77,8 @@ pub struct QuoteOption {
     pub closePrice: f64,
     pub netChange: f64,
     pub totalVolume: f64,
-    pub quoteTimeInLong: f64,
-    pub tradeTimeInLong: f64,
+    pub quoteTimeInLong: i64,
+    pub tradeTimeInLong: i64,
     pub mark: f64,
     pub openInterest: f64,
     pub volatility: f64,
@@ -112,8 +112,8 @@ pub struct PriceHistory {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Candle {
-    pub close: f64,
     pub datetime: f64,
+    pub close: f64,
     pub high: f64,
     pub low: f64,
     pub open: f64,

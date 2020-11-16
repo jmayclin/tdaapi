@@ -1,4 +1,4 @@
-use tdaapi::{API};
+use tdaapi::{API, QuoteStock};
 
 #[tokio::main]
 async fn main() {
@@ -17,8 +17,8 @@ async fn main() {
         let mut api_c = api.clone();
         let handle = tokio::spawn(async move {
             let symbol = sym;
-            let ask_price = api_c.quote(symbol).await.unwrap();
-            println!("The ask price for {} is {}", symbol, ask_price);
+            let quote = api_c.quote(symbol).await.unwrap();
+            println!("The ask price for {} is {}", symbol, quote.askPrice);
         });
         handles.push(handle);
     }

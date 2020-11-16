@@ -1,10 +1,5 @@
-get serde working
 environmental variables
-Then token refresh
 Then positions
-Then price history
-Then SQL lit
-Then current price
 Then place order
 Then sell order
 Then stop limit
