@@ -21,7 +21,7 @@ async fn main() {
         let mut api_c = api.clone();
         let handle = tokio::spawn(async move {
             let symbol = sym;
-            let history = api_c.history(symbol.to_string(), 2).await.unwrap();
+            let history = api_c.history(symbol, 2).await.unwrap();
             let mut average: f64 = history.iter().map(|candle| candle.close).sum();
             average /= history.len() as f64;
             println!("The ask price for {} is {:?}", symbol, history);

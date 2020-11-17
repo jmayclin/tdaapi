@@ -16,6 +16,8 @@ use crate::structs::*;
 
 use http::StatusCode;
 
+
+// move this into a different module
 #[derive(Clone)]
 struct Limiter {
     last_call: Arc<Mutex<Instant>>,
@@ -225,6 +227,66 @@ impl API {
 
     //5
     pub async fn get_transactions(&self) {}
+
+    //6
+    pub async fn get_option_chain(&mut self, symbol: &str) -> Result<Vec<(f64, f64)>, Box<dyn Error + Send + Sync>> {
+        println!("[get_option_chain] option chain for {}", symbol);
+
+        let uri = format!(
+            "https://api.tdameritrade.com/v1/marketdata/chains?apikey={apikey}&symbol={ticker}&contractType=CALL&strikeCount=6&includeQuotes=TRUE&strategy=SINGLE&toDate=2020-11-21",
+            ticker = symbol,
+            apikey = API::get_consumer_key()?,
+        ).parse::<Uri>()
+        .unwrap();
+
+        let mut headers = hyper::HeaderMap::new();
+        headers.insert(
+            "User-Agent",
+            hyper::header::HeaderValue::from_str("Miss Vanjie")?,
+        );
+
+        let resp = self.request(
+            Method::GET,
+            uri,
+            headers,
+            String::from(""),
+        ).await?;
+        let sc = resp.status();
+        let body = hyper::body::to_bytes(resp.into_body()).await?;
+
+        match sc {
+            http::StatusCode::OK => println!("Successful"),
+            _ => println!("Something has gone terribly wrong {:?}", body),
+        };
+
+        println!("The body of the request is {:?}", body);
+        // condense this
+        let chain: Value = serde_json::from_slice(&body)?;
+        println!("{}", serde_json::to_string_pretty(&chain).unwrap());
+
+        let chain: OptionChain = match serde_json::from_slice(&body) {
+            Ok(response) => response,
+            Err(error) => panic!("Problem parseing response {:?}", error),
+        };
+
+        let date = chain.callExpDateMap.keys().next().unwrap();
+        println!("The expiration date of these is {}", date);
+
+        assert_eq!(chain.callExpDateMap.len(), 1);
+        let price = chain.underlying.last;
+        let inner = chain.callExpDateMap.get(date).unwrap();
+        let options: Vec<(f64, f64)> = chain.callExpDateMap
+            .get(date).unwrap().iter()
+            .map(|(strike, options)| {
+                assert_eq!(options.len(), 1);
+                (strike.parse::<f64>().unwrap(), options[0].last)
+            })
+            .collect();
+
+
+        Ok(options)
+
+    }
 
     fn build_request(
         &self,
